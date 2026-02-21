@@ -2,7 +2,7 @@
 ![Cover](cover.png)
 
 # Description
-Laboratories' exercises for the course of "Algoritmi e Strutture Dati" at Politecnico di Torino, Italy
+Laboratories' exercises for the course of "Algoritmi e Strutture Dati" (italian version of the course "Algorithms and Data Structures" at Politecnico di Torino, Italy
 
 ## Structure of the repository
 - Part1: laboratories 1-3 (base C, recursion, file management and sorting)
