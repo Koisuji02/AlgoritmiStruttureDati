@@ -1,4 +1,4 @@
-# Algoritmi e Strutture Dati
+# Algorithms and Data Structures
 ![Cover](cover.png)
 
 # Description
