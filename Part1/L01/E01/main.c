@@ -2,89 +2,69 @@
 #include <string.h>
 #include <ctype.h>
 
-char * cercaRegexp(char *src, char *regexp);
+static int match_atom(char c, const char *re, int *consumed);
+char *cercaRegexp(char *src, char *regexp);
 
-int main() {
-    char src[5] = {'E', 'e','5', 't', '2'};
-    char regexp[14] = {'\\','A','[','a','e','i',']','5', 't', '[','1','2','3',']'};
+int main(void) {
+    char src[] = "Ee5t2";
+    char regexp[] = "\\A[aei]5t[123]";
     char *p = cercaRegexp(src, regexp);
-    if (p == NULL) printf("Sequenza non trovata!");
-    printf("%c", *p);
+    if (p == NULL) {
+        printf("Sequenza non trovata!\n");
+    } else {
+        printf("Trovata: %s\n", p);
+    }
     return 0;
 }
 
-
-char * cercaRegexp(char *src, char *regexp) {
-    int j, flag = 1, len_regexp = 0, i = 0, traslo = 0, posizione = 0, riparti = 1, counter = 0, k = 0;
-    char * puntatore;
-
-    for(j = 0; j < strlen(regexp); j++) {
-        if (regexp[j] == '\\') len_regexp += 0;
-        else if (regexp[j] == '[') flag = 0;
-        else if(regexp[j] == ']') {
-            flag = 1;
-            len_regexp ++;
-        }
-        else if(flag == 1) len_regexp ++;
+static int match_atom(char c, const char *re, int *consumed) {
+    if (re[0] == '.') {
+        *consumed = 1;
+        return 1;
     }
-
-    while (regexp[i+k] != '\0' || src[i+traslo] != '\0') {
-        switch(regexp[i+k]) {
-
-            case '.':
-                if (riparti == 0) posizione = traslo;
-                counter ++;
-                break;
-
-            case '[':
-                if (riparti == 0) posizione = traslo;
-                k ++;
-                if (regexp[i+k] == '^') {
-                    k ++;
-                    if (regexp[i+k] == src[i+traslo]) flag = 1;
-                    else flag = 0;
-                    k++;
-                }
-                else {
-                    while (regexp[i+k] != ']') {
-                        if (regexp[i+k] == src[i+traslo]) flag = 0;
-                        k++;
-                    }
-                }
-                if (flag == 0) counter ++;
-                break;
-
-            case '\\':
-                if (riparti == 0) posizione = traslo;
-                k ++;
-                if (regexp[i+k] == 'a') {
-                    if (islower(src[i+traslo])) counter ++;
-                }
-                if (regexp[i+k] == 'A') {
-                    if (isupper(src[i+traslo])) counter ++;
-                }
-                break;
-
-            default:
-                if (src[i+traslo] != regexp[i+k]) {
-                    riparti = 0;
-                    i = -1;
-                    traslo ++;
-                    counter = 0;
-                    k = 0;
-                    flag = 1;
-                }
-                else {
-                    riparti = 1;
-                    counter ++;
-                }
-                break;
-        }
-
-        i++;
+    if (re[0] == '\\') {
+        *consumed = 2;
+        if (re[1] == 'a') return islower((unsigned char)c) != 0;
+        if (re[1] == 'A') return isupper((unsigned char)c) != 0;
+        return 0;
     }
+    if (re[0] == '[') {
+        int i = 1;
+        int neg = 0;
+        int ok = 0;
+        if (re[i] == '^') {
+            neg = 1;
+            i++;
+        }
+        while (re[i] != ']' && re[i] != '\0') {
+            if (re[i] == c) ok = 1;
+            i++;
+        }
+        if (re[i] != ']') {
+            *consumed = 1;
+            return 0;
+        }
+        *consumed = i + 1;
+        return neg ? !ok : ok;
+    }
+    *consumed = 1;
+    return re[0] == c;
+}
 
-    if (counter != len_regexp) puntatore = NULL;
-    else puntatore = &src[posizione];
-    return puntatore;
+char *cercaRegexp(char *src, char *regexp) {
+    size_t i, j;
+    size_t len_src = strlen(src);
+
+    for (i = 0; i < len_src; i++) {
+        size_t s = i;
+        j = 0;
+        while (regexp[j] != '\0' && s < len_src) {
+            int consumed = 0;
+            if (!match_atom(src[s], &regexp[j], &consumed)) break;
+            s++;
+            j += (size_t)consumed;
+        }
+        if (regexp[j] == '\0') return &src[i];
+    }
+    return NULL;
 }

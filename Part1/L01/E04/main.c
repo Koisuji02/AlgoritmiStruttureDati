@@ -5,9 +5,6 @@
 #define MAX_CORSE 1000
 #define MAX_CHAR 30
 
-// Dato che la consegna mi chiedeva di partire dall'es 3 aggiungendo la funzionalità di un multiuordinamento, ho ripreso il programma del 3 e aggiunto questa funzionalità;
-// Se si vuole però controllare solo questa nuova funzionalità, piuttosto che rileggere tutto il programma, allora andare alla riga 232.
-
 typedef enum comando{r_date, r_stampa,r_codiceTratta, r_partenza, r_capolinea, r_ricerca, r_fine, r_error, r_multisorting}comando_e;
 
 typedef struct{
@@ -38,7 +35,7 @@ int main(void) {
         fscanf(fcorse, " %d", &nCorse);
     }
     for (i = 0; i < nCorse; i++) {
-        fscanf(fcorse, " %s %s %s %s %s %s %d", vetCorse[i].codice_tratta, vetCorse[i].partenza, vetCorse[i].destinazione, vetCorse[i].data, vetCorse[i].ora_arrivo, vetCorse[i].ora_partenza, &vetCorse[i].ritardo);
+        fscanf(fcorse, " %s %s %s %s %s %s %d", vetCorse[i].codice_tratta, vetCorse[i].partenza, vetCorse[i].destinazione, vetCorse[i].data, vetCorse[i].ora_partenza, vetCorse[i].ora_arrivo, &vetCorse[i].ritardo);
     }
     selezionaDati(vetCorse, nCorse);
     fclose(fcorse);
@@ -229,6 +226,14 @@ void insertion_sort(corse vetCorse[MAX_CORSE],int nCorse, comando_e c) {
     }
 }
 
+static void stampa_ordinato(corse *p[], int nCorse) {
+    int i;
+    for (i = 0; i < nCorse; i++) {
+        printf(" %s %s %s %s %s %s %d\n", p[i]->codice_tratta, p[i]->partenza, p[i]->destinazione,
+               p[i]->data, p[i]->ora_arrivo, p[i]->ora_partenza, p[i]->ritardo);
+    }
+}
+
 void multiordinamento(corse vetCorse[MAX_CORSE],int nCorse, comando_e c) {
     int i, j;
     corse *p_tratta[MAX_CORSE], *p_partenza[MAX_CORSE], *p_capolinea[MAX_CORSE], *p_date[MAX_CORSE], *key;
@@ -244,6 +249,7 @@ void multiordinamento(corse vetCorse[MAX_CORSE],int nCorse, comando_e c) {
             }
             p_tratta[j + 1] = key;
         }
+        stampa_ordinato(p_tratta, nCorse);
     }
     else if(c == r_partenza) {
         for (i = 0; i < nCorse; i++)
@@ -257,6 +263,7 @@ void multiordinamento(corse vetCorse[MAX_CORSE],int nCorse, comando_e c) {
             }
             p_partenza[j + 1] = key;
         }
+        stampa_ordinato(p_partenza, nCorse);
     }
     else if(c == r_capolinea) {
         for (i = 0; i < nCorse; i++)
@@ -270,6 +277,7 @@ void multiordinamento(corse vetCorse[MAX_CORSE],int nCorse, comando_e c) {
             }
             p_capolinea[j + 1] = key;
         }
+        stampa_ordinato(p_capolinea, nCorse);
     }
     else if(c == r_date) {
         for (i = 0; i < nCorse; i++)
@@ -293,6 +301,7 @@ void multiordinamento(corse vetCorse[MAX_CORSE],int nCorse, comando_e c) {
                 }
             }
         }
+        stampa_ordinato(p_date, nCorse);
     }
 }
 

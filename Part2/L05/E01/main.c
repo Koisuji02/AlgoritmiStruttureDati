@@ -1,73 +1,87 @@
 #include <stdio.h>
 #include <stdlib.h>
-#define MAX_CHAR (30+1)
 
-typedef struct{
+#define MAX_CHAR (30 + 1)
+
+typedef struct {
     int inizio;
     int fine;
-}att;
+} att;
 
-att * leggi_file(int * num_elementi);
-void attSel(int N, att * v);
-int attSel_r(int N, att * v, int * sol, int * mark, int j, int durata_locale, int * durata_max, int pos_tmp);
+static att *leggi_file(int *num_elementi);
+static int compatibile(att *v, int *sel, int pos);
+static void attSel_r(att *v, int N, int pos, int *sel, int *best, int durata);
 
-int main(){
+int main(void) {
     int num_elementi;
-    att * v = leggi_file(&num_elementi);
-    if (v != NULL){
-        attSel(num_elementi, v);
+    att *v = leggi_file(&num_elementi);
+    if (v != NULL) {
+        int *sel = calloc(num_elementi, sizeof(int));
+        int *best = calloc(num_elementi, sizeof(int));
+        int i, durata = 0;
+
+        attSel_r(v, num_elementi, 0, sel, best, durata);
+        printf("Coppie:\n");
+        for (i = 0; i < num_elementi; i++) {
+            if (best[i]) printf("(%d,%d)\n", v[i].inizio, v[i].fine);
+        }
+        free(sel);
+        free(best);
+        free(v);
     }
     return 0;
 }
 
-att * leggi_file(int * num_elementi){
-    att * vet_att;
+static att *leggi_file(int *num_elementi) {
+    att *vet_att;
     int i;
-    char * filename = calloc(MAX_CHAR, sizeof(char));
-    printf("Inserisci il nome del file da aprire:\n"); scanf(" %s", filename);
-    FILE * fin = fopen(filename, "r");
-    if (fin!=NULL) {
-        fscanf(fin, " %d", num_elementi);
+    char filename[MAX_CHAR];
+    printf("Inserisci il nome del file da aprire:\n");
+    scanf(" %s", filename);
+    FILE *fin = fopen(filename, "r");
+    if (fin != NULL) {
+        if (fscanf(fin, " %d", num_elementi) != 1) {
+            fclose(fin);
+            return NULL;
+        }
         vet_att = calloc(*num_elementi, sizeof(att));
-        for (i = 0; i < *num_elementi; i++) fscanf(fin, " %d %d", &vet_att[i].inizio, &vet_att[i].fine);
+        for (i = 0; i < *num_elementi; i++) {
+            fscanf(fin, " %d %d", &vet_att[i].inizio, &vet_att[i].fine);
+        }
+    } else {
+        vet_att = NULL;
     }
-    else vet_att = NULL;
-    fclose(fin);
-    free(filename);
+    if (fin != NULL) fclose(fin);
     return vet_att;
 }
 
-void attSel(int N, att * v){
-    int i, *sol = calloc(N, sizeof(int)), *mark = calloc(N, sizeof(int)), durata_max = 0, durata_locale;
-    for(i = 0; i < N; i++){
-        durata_locale = attSel_r(N, v, sol, mark, i, 0,  &durata_max, 0);
-        if(durata_locale > durata_max) durata_max = durata_locale;
+static int compatibile(att *v, int *sel, int pos) {
+    int i;
+    for (i = 0; i < pos; i++) {
+        if (sel[i]) {
+            if (v[i].inizio < v[pos].fine && v[pos].inizio < v[i].fine) return 0;
+        }
     }
-    printf("Coppie:\n");
-    for (i = 0; i < N; i++){
-        if (sol[i] == 1) printf("(%d,%d)\n", v[i].inizio, v[i].fine);
-    }
-    printf("Durata massima: %d\n", durata_max);
+    return 1;
 }
 
-int attSel_r(int N, att * v, int * sol, int * mark, int j, int durata_locale, int * durata_max, int pos_tmp){
+static void attSel_r(att *v, int N, int pos, int *sel, int *best, int durata) {
+    static int durata_max = 0;
     int i;
-    if(j >= N){
-        if (durata_locale > *durata_max){
-            for(i = 0; i < N; i++) sol[i] = mark[i];
-            *durata_max = durata_locale;
+    if (pos == N) {
+        if (durata > durata_max) {
+            durata_max = durata;
+            for (i = 0; i < N; i++) best[i] = sel[i];
         }
-        return durata_locale;
+        return;
     }
-    if(j == 0 || (j > 0 && !(v[j].inizio < v[pos_tmp].fine && v[pos_tmp].inizio < v[j].fine))) {
-        mark[j] = 1;
-        durata_locale += (v[j].fine - v[j].inizio);
-        durata_locale = attSel_r(N, v, sol, mark, j + 1, durata_locale, durata_max, j);
-        mark[j] = 0;
-        durata_locale -= (v[j].fine - v[j].inizio);
-        durata_locale = attSel_r(N, v, sol, mark, j + 1, durata_locale, durata_max, j-1);
 
+    sel[pos] = 0;
+    attSel_r(v, N, pos + 1, sel, best, durata);
+
+    if (compatibile(v, sel, pos)) {
+        sel[pos] = 1;
+        attSel_r(v, N, pos + 1, sel, best, durata + (v[pos].fine - v[pos].inizio));
+        sel[pos] = 0;
     }
-    else durata_locale = attSel_r(N, v, sol, mark, j  + 1, durata_locale, durata_max, pos_tmp);
-    return durata_locale;
 }

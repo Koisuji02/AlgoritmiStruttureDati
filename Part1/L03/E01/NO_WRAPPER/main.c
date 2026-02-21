@@ -5,18 +5,18 @@
 
 int majority(int *a, int N);
 
-void main() {
-    int c, vet[MAX_N] = {1,2,2,3,3,2,2};
+int main(void) {
+    int vet[MAX_N] = {1,2,2,3,3,2,2};
     printf("%d\n", majority(vet,MAX_N));
+    return 0;
 }
 
 int majority(int *a, int N) {
-    int k = 0, counter = 0;
-    if(*a == '\0') return -1;
-    while(*(a+k) != '\0') {
-    	if (*a == *(a+k)) counter ++;
-    	k++;
-	}
-    if (counter > N/2) return *a;
-    return majority(a+1, N);
+    int i, counter = 0;
+    if (N <= 0) return -1;
+    for (i = 0; i < N; i++) {
+        if (a[0] == a[i]) counter++;
+    }
+    if (counter > (N + 1) / 2) return a[0];
+    return majority(a + 1, N - 1);
 }

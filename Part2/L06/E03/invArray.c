@@ -7,6 +7,8 @@ struct invArray_s {
 
 invArray_t invArray_init(){
     invArray_t invArray = malloc(sizeof(struct invArray_s));
+    invArray->vet = NULL;
+    invArray->N = 0;
     return invArray;
 }
 

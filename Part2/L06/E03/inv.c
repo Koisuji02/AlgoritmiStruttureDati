@@ -5,15 +5,24 @@ void stat_read(FILE *fp, stat_t *statp){
 }
 
 void stat_print(FILE *fp, stat_t *statp, int soglia){
+    stat_t tmp = *statp;
     if (soglia == MIN_STAT) {
-        if (statp->hp < soglia) statp->hp = soglia;
-        if (statp->mp < soglia) statp->mp = soglia;
-        if (statp->atk < soglia) statp->atk = soglia;
-        if (statp->def < soglia) statp->def = soglia;
-        if (statp->mag < soglia) statp->mag = soglia;
-        if (statp->spr < soglia) statp->spr = soglia;
+        if (tmp.hp < soglia) tmp.hp = soglia;
+        if (tmp.mp < soglia) tmp.mp = soglia;
+        if (tmp.atk < soglia) tmp.atk = soglia;
+        if (tmp.def < soglia) tmp.def = soglia;
+        if (tmp.mag < soglia) tmp.mag = soglia;
+        if (tmp.spr < soglia) tmp.spr = soglia;
     }
-    fprintf(fp, " %d %d %d %d %d %d", statp->hp, statp->mp, statp->atk, statp->def, statp->mag, statp->spr);
+    if (soglia == MIN_ASS) {
+        if (tmp.hp < soglia) tmp.hp = soglia;
+        if (tmp.mp < soglia) tmp.mp = soglia;
+        if (tmp.atk < soglia) tmp.atk = soglia;
+        if (tmp.def < soglia) tmp.def = soglia;
+        if (tmp.mag < soglia) tmp.mag = soglia;
+        if (tmp.spr < soglia) tmp.spr = soglia;
+    }
+    fprintf(fp, " %d %d %d %d %d %d", tmp.hp, tmp.mp, tmp.atk, tmp.def, tmp.mag, tmp.spr);
 }
 
 void stat_init(stat_t * statp){

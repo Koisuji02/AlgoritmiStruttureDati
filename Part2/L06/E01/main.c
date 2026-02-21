@@ -1,108 +1,87 @@
 #include <stdio.h>
 #include <stdlib.h>
-#define MAX_CHAR (30+1)
 
-typedef struct{
+#define MAX_CHAR (30 + 1)
+
+typedef struct {
     int inizio;
     int fine;
-}att;
+} att;
 
-int compare (const void * a, const void * b);
-att * attSort(att * v, int N);
-att * leggi_file(int * N);
-void attSelDP(int N, att * v, int * somme);
-
-int main(){
-
-    int N, *somme;
-    att * v = leggi_file(&N);
-    somme = calloc(N, sizeof(int));
-    attSort(v, N);
-    if (v != NULL){ attSelDP(N, v, somme);}
-    return 0;
+static int compare_end(const void *a, const void *b) {
+    const att *x = (const att *)a;
+    const att *y = (const att *)b;
+    if (x->fine != y->fine) return x->fine - y->fine;
+    return x->inizio - y->inizio;
 }
 
-att * leggi_file(int * N){
-    att * vet_att;
+static att *leggi_file(int *N) {
+    att *v;
     int i;
-    char * filename = calloc(MAX_CHAR, sizeof(char));
-    printf("Inserisci il nome del file da aprire:\n"); scanf(" %s", filename);
-
-    FILE * fin = fopen(filename, "r");
-    if (fin!=NULL) {
-        fscanf(fin, " %d", N);
-        vet_att = calloc(*N, sizeof(att));
-        for (i = 0; i < *N; i++) fscanf(fin, " %d %d", &vet_att[i].inizio, &vet_att[i].fine);
+    char filename[MAX_CHAR];
+    printf("Inserisci il nome del file da aprire:\n");
+    scanf(" %s", filename);
+    FILE *fin = fopen(filename, "r");
+    if (fin == NULL) return NULL;
+    if (fscanf(fin, " %d", N) != 1) {
+        fclose(fin);
+        return NULL;
     }
-    else vet_att = NULL;
+    v = calloc(*N, sizeof(att));
+    for (i = 0; i < *N; i++) fscanf(fin, " %d %d", &v[i].inizio, &v[i].fine);
     fclose(fin);
-    free(filename);
-    return vet_att;
-}
-
-void attSelDP(int N, att * v, int * somme){
-
-    int k, h, massimo, i, j, pos, index, c = 0;
-    somme[0] = v[0].fine - v[0].inizio;
-    massimo = somme[0];
-    att * sol = malloc(N*sizeof(att));
-
-    for (i = 1; i < N; i++){
-        k = 1;
-        while(v[i-k].fine > v[i].inizio) if((i-k) > 0) k++; else break;
-        pos = i-k;
-        h = 1;
-        while((pos-h) >= 0){
-            if(v[pos-h].fine <= v[i].inizio) {
-                if(somme[pos-h] > somme[pos])
-                    pos -= h;
-                else h++;
-            }
-            else h++;
-        }
-        if(v[pos].fine <= v[i].inizio)
-            somme[i] = somme[pos] + (v[i].fine - v[i].inizio);
-        else
-            somme[i] = v[i].fine - v[i].inizio;
-        if(somme[i] > massimo){
-            massimo = somme[i];
-            index = i;
-        }
-    }
-    sol[c] = v[index];
-    c++;
-    i = index-1;
-    while(i >= 0){
-        j = i;
-        if(v[index].inizio >= v[i].fine){
-            k = i-1;
-            while(k >= 0){
-                if(v[index].inizio >= v[k].fine){
-                    if(somme[k] > somme[i]) j = k;
-                }
-                k--;
-            }
-            index = j;
-            sol[c] = v[j];
-            c++;
-        }
-        i= j-1;
-    }
-    printf("Coppie:\n");
-    for(i = c-1; i >= 0; i--) printf("(%d,%d) ", sol[i].inizio, sol[i].fine);
-    printf("\nMassimo: %d", massimo);
-    free(sol);
-}
-
-att * attSort(att * v, int N){
-    qsort(v, N, sizeof(att), compare);
     return v;
 }
 
-int compare (const void * a, const void * b) {
-    att *att_1 = (att *)a;
-    att *att_2 = (att *)b;
-	if(att_1->inizio != att_2->inizio) return ( att_1->inizio - att_2->inizio );
-	else  return ( att_1->fine - att_2->fine );
+static int last_compatible(att *v, int i) {
+    int j;
+    for (j = i - 1; j >= 0; j--) {
+        if (v[j].fine <= v[i].inizio) return j;
+    }
+    return -1;
+}
 
+int main(void) {
+    int N, i, j;
+    att *v = leggi_file(&N);
+    int *p, *dp, *take;
+
+    if (v == NULL) return 1;
+    qsort(v, N, sizeof(att), compare_end);
+
+    p = malloc(N * sizeof(int));
+    for (i = 0; i < N; i++) p[i] = last_compatible(v, i);
+
+    dp = calloc(N, sizeof(int));
+    take = calloc(N, sizeof(int));
+
+    for (i = 0; i < N; i++) {
+        int durata = v[i].fine - v[i].inizio;
+        int with_i = durata + (p[i] >= 0 ? dp[p[i]] : 0);
+        int without_i = (i > 0 ? dp[i - 1] : 0);
+        if (with_i > without_i) {
+            dp[i] = with_i;
+            take[i] = 1;
+        } else {
+            dp[i] = without_i;
+            take[i] = 0;
+        }
+    }
+
+    printf("Coppie:\n");
+    for (i = N - 1; i >= 0; ) {
+        if (take[i]) {
+            printf("(%d,%d) ", v[i].inizio, v[i].fine);
+            i = p[i];
+        } else {
+            i--;
+        }
+    }
+    printf("\nMassimo: %d\n", dp[N - 1]);
+
+    free(v);
+    free(p);
+    free(dp);
+    free(take);
+    return 0;
 }

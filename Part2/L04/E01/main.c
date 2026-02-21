@@ -1,109 +1,65 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-typedef struct {int estremo1; int estremo2;} arco_t;
+typedef struct {
+    int u;
+    int v;
+} edge_t;
 
-int compare (int * a, int* b) {
-    return (*a - *b);
+static int is_cover(edge_t *edges, int E, int *sel) {
+    int i;
+    for (i = 0; i < E; i++) {
+        if (!sel[edges[i].u] && !sel[edges[i].v]) return 0;
+    }
+    return 1;
 }
 
-int trova_archi(int * vetNodi ,arco_t * vetArchi, int E, int * sol, int pos, int val, int start, int end, int counter, int controllo);
-void print_archi(int * sol, int E);
-void print_consecutivi(int * sol, int * vetNodi, int E, int index, int num_rimasti);
+static void print_cover(int *sel, int N) {
+    int i, first = 1;
+    printf("(");
+    for (i = 0; i < N; i++) {
+        if (sel[i]) {
+            if (!first) printf(", ");
+            printf("%d", i);
+            first = 0;
+        }
+    }
+    printf(")\n");
+}
 
-int main() {
-    int N, E, i, k, indice = 0, * sol, * vetNodi, flag1, flag2;
-    arco_t * vetArchi;
-    FILE * fin = fopen("grafo.txt", "r");
-    fscanf(fin, "%d %d", &N, &E);
-    vetArchi = malloc(E * sizeof(arco_t));
-    for (i = 0; i < E; i++) fscanf(fin, " %d %d", &(vetArchi[i].estremo1), &(vetArchi[i].estremo2));
-    vetNodi = malloc(N * sizeof(int)); vetNodi[0] = -1;
+static void enum_covers(int pos, int N, edge_t *edges, int E, int *sel) {
+    if (pos == N) {
+        if (is_cover(edges, E, sel)) {
+            print_cover(sel, N);
+        }
+        return;
+    }
+    sel[pos] = 0;
+    enum_covers(pos + 1, N, edges, E, sel);
+    sel[pos] = 1;
+    enum_covers(pos + 1, N, edges, E, sel);
+}
+
+int main(void) {
+    int N, E, i;
+    edge_t *edges;
+    int *sel;
+    FILE *fin = fopen("grafo.txt", "r");
+    if (fin == NULL) return 1;
+    if (fscanf(fin, " %d %d", &N, &E) != 2) {
+        fclose(fin);
+        return 1;
+    }
+    edges = malloc(E * sizeof(edge_t));
     for (i = 0; i < E; i++) {
-        flag1  = 1;
-        flag2 = 1;
-        for (k = 0; k < indice; k++) {
-            if (vetArchi[i].estremo1 == vetNodi[k]) flag1 = 0;
-            if (vetArchi[i].estremo2 == vetNodi[k]) flag2 = 0;
-        }
-        if (flag1) {
-            vetNodi[indice] = vetArchi[i].estremo1;
-            indice++;
-        }
-        if (flag2) {
-            vetNodi[indice] = vetArchi[i].estremo2;
-            indice++;
-        }
+        fscanf(fin, " %d %d", &edges[i].u, &edges[i].v);
     }
     fclose(fin);
-    sol = calloc(E, sizeof(int));
-    trova_archi(vetNodi, vetArchi, E, sol, 0, 0, 0, E, 0, 1);
+
+    sel = calloc(N, sizeof(int));
+    enum_covers(0, N, edges, E, sel);
+
+    free(sel);
+    free(edges);
     return 0;
-}
-
-int trova_archi(int * vetNodi ,arco_t * vetArchi, int E, int * sol, int pos, int val, int start, int end, int counter, int controllo) {
-    int i, k, j, temp, num_rimasti, index;
-    if (controllo) {
-        for (j = 1; (pos + j) < end; j++) {
-            for (i = start; i < end; i++) {
-                if (vetNodi[pos + val] == vetArchi[i].estremo1 || vetNodi[pos + val] == vetArchi[i].estremo2) {
-                    sol[i] = vetNodi[pos + val];
-                    counter++;
-                } else {
-                    counter += trova_archi(vetNodi, vetArchi, E, sol, pos, val+j, i, i + 1, counter, 0);
-                }
-            }
-            if (counter == E) {
-                printf("( "); print_archi(sol, E); printf(")\n");
-                qsort (sol, 4, sizeof(int), compare);
-                num_rimasti = 0;
-                for (k = 0; k < E; k++) {
-                    if(vetNodi[k] > sol[E-1]) {
-                        num_rimasti++;
-                        if(num_rimasti == 1) index = k;
-                    }
-                }
-                print_consecutivi(sol, vetNodi, E, index, num_rimasti);
-            }
-            counter = 0;
-        }
-    }
-    else {
-        temp = counter;
-        for (i = start; i < end; i++) {
-            if (vetNodi[pos + val] == vetArchi[i].estremo1 || vetNodi[pos + val] == vetArchi[i].estremo2) {
-                sol[i] = vetNodi[pos + val];
-                counter++;
-            } else {
-                if ((pos+val+1)<E) counter += trova_archi(vetNodi, vetArchi, E, sol, pos, val + 1, i, i + 1, counter, 0);
-            }
-        }
-        return (counter-temp);
-    }
-    if((pos+1) < E) return trova_archi(vetNodi,vetArchi, E, sol, pos+1, 0, 0,E, 0,1);
-    return 0;
-}
-
-void print_archi(int * sol, int E) {
-    int i, k, flag, tmp[E];
-    for (i = 0; i < E; i++) {
-        flag = 1;
-        for (k = 0; k < i; k++) if (sol[i] == tmp[k]) flag = 0;
-        tmp[i] = sol[i];
-        if (flag) printf("%d ", sol[i]);
-    }
-}
-
-void print_consecutivi(int * sol, int * vetNodi, int E, int index, int num_rimasti) {
-    int k = 0, c, l;
-    while (k < num_rimasti) {
-        for(c = index; c < index + num_rimasti ; c++) {
-            if (c+k < E) {
-                printf("( "); print_archi(sol, E);
-                for (l = c; l <= (c+k) && l< E; l++) printf("%d ", vetNodi[l]);
-                printf(")\n");
-            }
-        }
-        k++;
-    }
 }

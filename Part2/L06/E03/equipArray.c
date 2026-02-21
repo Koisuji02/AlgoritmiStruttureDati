@@ -6,15 +6,13 @@ struct equipArray_s {
 };
 
 equipArray_t equipArray_init(){
-    equipArray_t equipArray = malloc(sizeof(equipArray_t));
+    equipArray_t equipArray = malloc(sizeof(struct equipArray_s));
     equipArray->vettEq = malloc(EQUIP_SLOT * sizeof(inv_t*));
     equipArray->inUso = 0;
     return equipArray;
 }
 
 void equipArray_free(equipArray_t equipArray){
-    int i;
-    for (i = 0; i < equipArray->inUso; i++) free(equipArray->vettEq[i]);
     free(equipArray->vettEq);
     free(equipArray);
 }
@@ -41,17 +39,15 @@ void equipArray_update(equipArray_t equipArray, invArray_t invArray){
                 if(equipArray->inUso < EQUIP_SLOT){
                     printf("Inserisci il nome dell'equipaggiamento:\n");
                     scanf(" %s", name);
-                    equipArray->vettEq[equipArray->inUso] = malloc(sizeof(inv_t));
-                    for(i = 0; i < invArray_len(invArray); i++)
+                    for(i = 0; i < invArray_len(invArray); i++) {
                         if (strcmp(name, (invArray_getByIndex(invArray, i))->nome) == 0) {
                             equipArray->vettEq[equipArray->inUso] = invArray_getByIndex(invArray, i);
                             flag = 1;
+                            break;
                         }
-                    if (flag == 1) equipArray->inUso++;
-                    else{
-                        printf("\nErrore, nome errato!\n");
-                        free(equipArray->vettEq[equipArray->inUso]);
                     }
+                    if (flag == 1) equipArray->inUso++;
+                    else printf("\nErrore, nome errato!\n");
                 }
                 else
                     printf("Slot pieni! Togli qualcosa per reinserire.\n");
@@ -65,7 +61,6 @@ void equipArray_update(equipArray_t equipArray, invArray_t invArray){
                         if (strcmp(name, equipArray->vettEq[i]->nome) == 0) {
                             for (j = i; j < equipArray->inUso - 1; j++)
                                 equipArray->vettEq[j] = equipArray->vettEq[j + 1];
-                            //free(equipArray->vettEq[equipArray->inUso-1]);
                             equipArray->vettEq[equipArray->inUso-1] = NULL;
                             flag = 1;
                             break;

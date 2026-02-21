@@ -7,6 +7,7 @@ int main() {
     printf("Inserisci i due numeri: "); scanf("%d %d", &a, &b);
     max_div = gcd(a,b);
     printf("GCD: %d\n", max_div);
+    return 0;
 }
 
 int gcd(int a, int b) {
@@ -16,9 +17,6 @@ int gcd(int a, int b) {
         a = b;
         b = tmp;
     }
-    if ((a%b) == 0) return b;
-    else if (((a % 2) == 0) && ((b % 2) == 0)) return (2*gcd((a/2), (b/2)));
-    else if (((a % 2) != 0) && ((b % 2) == 0)) return (gcd(a, (b/2)));
-    else if (((a % 2) == 0) && ((b % 2) != 0)) return (gcd((a/2), b));
-    else if (((a % 2) != 0) && ((b % 2) != 0)) return (gcd(((a-b)/2), b));
+    if (b == 0) return a;
+    return gcd(b, a % b);
 }

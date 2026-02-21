@@ -1,35 +1,31 @@
-#include <stdlib.h>
 #include <stdio.h>
-
 #include "pgList.h"
 #include "invArray.h"
 #include "pg.h"
 
 #define N_SCELTE 7
-#define DBG 0
 
 enum { falso, vero };
+
 typedef int bool;
 
-void stampaMenu(char *scelte[], int *selezione){
+static void stampaMenu(char *scelte[], int *selezione) {
     int i;
     printf("\nMENU'\n");
-    for(i = 0; i < N_SCELTE; i++)
-        printf("%2d --> %s\n", i, scelte[i]);
+    for (i = 0; i < N_SCELTE; i++) printf("%2d --> %s\n", i, scelte[i]);
     printf("Inserisci una scelta:\n");
     scanf(" %d", selezione);
-
 }
 
-int main(int argc, char **argv) {
+int main(void) {
     char *scelte[] = {
-            "Uscita",
-            "Stampa personaggi",
-            "Stampa inventario",
-            "Cerca personaggio",
-            "Aggiungi personaggio",
-            "Elimina personaggio",
-            "Modifica equip"
+        "Uscita",
+        "Stampa personaggi",
+        "Stampa inventario",
+        "Cerca personaggio",
+        "Aggiungi personaggio",
+        "Elimina personaggio",
+        "Modifica equip"
     };
 
     char codiceRicerca[LEN];
@@ -42,78 +38,67 @@ int main(int argc, char **argv) {
     pg_t *pgp, pg;
 
     fin = fopen("pg.txt","r");
-    pgList = pgList_read(fin, pgList);
-    fclose(fin);
-#if DBG
-    pgList_print(stdout, pgList);
-#endif /* DBG */
+    if (fin != NULL) {
+        pgList = pgList_read(fin, pgList);
+        fclose(fin);
+    }
 
     fin = fopen("inventario.txt","r");
-    invArray_read(fin, invArray);
-    fclose(fin);
-#if DBG
-    invArray_print(stdout, invArray);
-#endif /* DBG */
+    if (fin != NULL) {
+        invArray_read(fin, invArray);
+        fclose(fin);
+    }
 
     fineProgramma = falso;
     do {
         stampaMenu(scelte, &selezione);
-        switch(selezione){
-
-            case 0: {
+        switch(selezione) {
+            case 0:
                 fineProgramma = vero;
-            } break;
-
-            case 1: {
+                break;
+            case 1:
                 pgList_print(stdout, pgList, invArray);
-            } break;
-
-            case 2: {
+                break;
+            case 2:
                 invArray_print(stdout, invArray);
-            } break;
-
-            case 3: {
+                break;
+            case 3:
                 printf("Inserire codice personaggio: ");
                 scanf("%s", codiceRicerca);
                 pgp = pgList_searchByCode(pgList, codiceRicerca);
-                if (pgp!=NULL) {
+                if (pgp != NULL) {
                     printf("\nPersonaggio trovato:\n");
                     pg_print(stdout, pgp, invArray);
                     printf("\n");
                 }
-            } break;
-
-            case 4: {
+                break;
+            case 4:
                 printf("Cod Nome Classe HP MP ATK DEF MAG SPR: ");
                 if (pg_read(stdin, &pg) != 0) {
                     pgList = pgList_insert(pgList, pg);
                 }
-            } break;
-
-            case 5: {
+                break;
+            case 5:
                 printf("Inserire codice personaggio: ");
                 scanf("%s", codiceRicerca);
                 pgList = pgList_remove(pgList, codiceRicerca);
-            } break;
-
-            case 6: {
+                break;
+            case 6:
                 printf("Inserire codice personaggio: ");
                 scanf("%s", codiceRicerca);
                 pgp = pgList_searchByCode(pgList, codiceRicerca);
-                if (pgp!=NULL) {
+                if (pgp != NULL) {
                     pg_updateEquip(pgp, invArray);
                 }
-            } break;
-
+                break;
             default:
-                printf("Scelta non valida! \n");
+                printf("Scelta non valida!\n");
                 fineProgramma = vero;
                 break;
         }
-    } while(!fineProgramma);
+    } while (!fineProgramma);
 
     pgList_free(pgList);
     invArray_free(invArray);
-
     return 0;
 }

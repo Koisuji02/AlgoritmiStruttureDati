@@ -1,9 +1,8 @@
 #include "pg.h"
 
-int pg_read(FILE *fp, pg_t *pgp){
+int pg_read(FILE *fp, pg_t *pgp) {
     stat_t statp;
-    if (fp != NULL) {
-        fscanf(fp, " %s %s %s", pgp->cod, pgp->nome, pgp->classe);
+    if (fp != NULL && fscanf(fp, " %s %s %s", pgp->cod, pgp->nome, pgp->classe) == 3) {
         stat_read(fp, &statp);
         pgp->b_stat = statp;
         stat_init(&pgp->eq_stat);
@@ -13,8 +12,7 @@ int pg_read(FILE *fp, pg_t *pgp){
     return 0;
 }
 
-void pg_print(FILE *fp, pg_t *pgp, invArray_t invArray){
-
+void pg_print(FILE *fp, const pg_t *pgp, invArray_t invArray) {
     stat_t somma = stat_somma(&pgp->b_stat, &pgp->eq_stat);
     fprintf(fp, "\n-> %s %s %s ", pgp->cod, pgp->nome, pgp->classe);
     stat_print(fp, &pgp->b_stat, MIN_STAT);
@@ -26,15 +24,15 @@ void pg_print(FILE *fp, pg_t *pgp, invArray_t invArray){
         fprintf(fp, "\n->-> Equipaggiamento in uso: ");
         equipArray_print(fp, pgp->equip, invArray);
     }
-
 }
 
-void pg_clean(pg_t *pgp){
+void pg_clean(pg_t *pgp) {
     equipArray_free(pgp->equip);
     pgp->equip = equipArray_init();
+    stat_init(&pgp->eq_stat);
 }
 
-void pg_updateEquip(pg_t *pgp, invArray_t invArray){
+void pg_updateEquip(pg_t *pgp, invArray_t invArray) {
     equipArray_update(pgp->equip, invArray);
-    pgp->eq_stat = equipArray_eqStat(pgp->equip);
+    pgp->eq_stat = equipArray_eqStat(pgp->equip, invArray);
 }

@@ -23,7 +23,9 @@ void strtolower(char s[MAX_CHAR]);
 void stampa(corse vetCorse[MAX_CORSE], int nCorse);
 void insertion_sort(corse vetCorse[MAX_CORSE],int nCorse, comando_e c);
 void ricerca(corse vetCorse[MAX_CORSE], int nCorse);
-int ricerca_dicotomica(corse vetCorse[MAX_CORSE], int inizio, int nCorse, char str_input[MAX_CHAR +1]);
+int ricerca_dicotomica(corse vetCorse[MAX_CORSE], int nCorse, const char str_input[MAX_CHAR + 1]);
+int starts_with_case_insensitive(const char *s, const char *prefix);
+int compare_prefix_case_insensitive(const char *s, const char *prefix);
 
 
 int main(void) {
@@ -34,7 +36,7 @@ int main(void) {
         fscanf(fcorse, " %d", &nCorse);
     }
     for (i = 0; i < nCorse; i++) {
-        fscanf(fcorse, " %s %s %s %s %s %s %d", vetCorse[i].codice_tratta, vetCorse[i].partenza, vetCorse[i].destinazione, vetCorse[i].data, vetCorse[i].ora_arrivo, vetCorse[i].ora_partenza, &vetCorse[i].ritardo);
+        fscanf(fcorse, " %s %s %s %s %s %s %d", vetCorse[i].codice_tratta, vetCorse[i].partenza, vetCorse[i].destinazione, vetCorse[i].data, vetCorse[i].ora_partenza, vetCorse[i].ora_arrivo, &vetCorse[i].ritardo);
     }
     selezionaDati(vetCorse, nCorse);
     fclose(fcorse);
@@ -211,7 +213,7 @@ void insertion_sort(corse vetCorse[MAX_CORSE],int nCorse, comando_e c) {
 
 void ricerca(corse vetCorse[MAX_CORSE], int nCorse) {
     char str_input[MAX_CHAR+1], scelta[MAX_CHAR+1];
-    int i,j, counter = 0, inizio = 0, flag = 1;
+    int i, flag = 1;
     printf("Inserisci la stazione di partenza (anche parzialmente):\n");
     scanf(" %s", str_input);
     printf("Scegli tra ricerca lineare o dicotomica:\n");
@@ -219,43 +221,63 @@ void ricerca(corse vetCorse[MAX_CORSE], int nCorse) {
     strtolower(scelta);
     if (strcmp(scelta, "lineare") == 0) {
         for (i = 0; i < nCorse; i++) {
-            for (j = 0; j < strlen(str_input); j++) {
-                if (tolower(str_input[j]) == tolower(vetCorse[i].partenza[j])) counter++;
-            }
-            if (counter == j) {
+            if (starts_with_case_insensitive(vetCorse[i].partenza, str_input)) {
                 printf("-> Trovata la corsa: %s %s %s %s %s %s %d\n", vetCorse[i].codice_tratta, vetCorse[i].partenza, vetCorse[i].destinazione, vetCorse[i].data, vetCorse[i].ora_arrivo, vetCorse[i].ora_partenza, vetCorse[i].ritardo);
                 flag = 0;
             }
-            counter = 0;
         }
         if (flag == 1) printf("Corsa non trovata!\n");
     }
     if (strcmp(scelta, "dicotomica") == 0) {
         insertion_sort(vetCorse, nCorse, r_partenza);
-    	ricerca_dicotomica(vetCorse, inizio, nCorse, str_input);
+    	ricerca_dicotomica(vetCorse, nCorse, str_input);
     }
 }
 
-int ricerca_dicotomica(corse vetCorse[MAX_CORSE], int inizio, int nCorse, char str_input[MAX_CHAR +1]) {
-	int m, j, i, counter = 0;
-	if (inizio > nCorse) {
+int ricerca_dicotomica(corse vetCorse[MAX_CORSE], int nCorse, const char str_input[MAX_CHAR +1]) {
+    int left = 0, right = nCorse - 1, found = -1;
+    while (left <= right) {
+        int mid = (left + right) / 2;
+        int cmp = compare_prefix_case_insensitive(vetCorse[mid].partenza, str_input);
+        if (cmp == 0) {
+            found = mid;
+            break;
+        }
+        if (cmp < 0) left = mid + 1;
+        else right = mid - 1;
+    }
+    if (found == -1) {
         printf("Corsa non trovata!\n");
         return -1;
     }
-	m = (inizio + nCorse)/2;
-	for (j = 0; j < strlen(str_input); j++) {
-        if (tolower(str_input[j]) == tolower(vetCorse[m].partenza[j])) counter++;
-        else if(tolower(str_input[j]) < tolower(vetCorse[m].partenza[j])) return ricerca_dicotomica(vetCorse, inizio, m-1, str_input);
-        else return ricerca_dicotomica(vetCorse, m+1, nCorse, str_input);
+    while (found > 0 && starts_with_case_insensitive(vetCorse[found - 1].partenza, str_input)) {
+        found--;
     }
-    if (counter == j) {
-    	// dato che la ricerca dicotomica trova un unico valore e lo ritorna, per stampare effettivamente tutte le corse con quella partenza, dopo aver trovato
-    	// l'elemento vetCorse[m] dalla dicotomica, lo comparo a tutti gli elementi del vetCorse e stampo quelli con la stessa partenza (altrimenti ne stampa solo 1)
-    	for (i = 0; i < nCorse; i++) {
-    		if(strcmp(vetCorse[m].partenza,vetCorse[i].partenza) == 0) printf("-> Trovata la corsa: %s %s %s %s %s %s %d\n", vetCorse[i].codice_tratta, vetCorse[i].partenza,
-               vetCorse[i].destinazione, vetCorse[i].data, vetCorse[i].ora_arrivo, vetCorse[i].ora_partenza,
-               vetCorse[i].ritardo);
-    	}
-        return 0;
+    while (found < nCorse && starts_with_case_insensitive(vetCorse[found].partenza, str_input)) {
+        printf("-> Trovata la corsa: %s %s %s %s %s %s %d\n", vetCorse[found].codice_tratta, vetCorse[found].partenza,
+               vetCorse[found].destinazione, vetCorse[found].data, vetCorse[found].ora_arrivo, vetCorse[found].ora_partenza,
+               vetCorse[found].ritardo);
+        found++;
     }
+    return 0;
+}
+
+int starts_with_case_insensitive(const char *s, const char *prefix) {
+    size_t i = 0;
+    for (; prefix[i] != '\0'; i++) {
+        if (s[i] == '\0') return 0;
+        if (tolower((unsigned char)s[i]) != tolower((unsigned char)prefix[i])) return 0;
+    }
+    return 1;
+}
+
+int compare_prefix_case_insensitive(const char *s, const char *prefix) {
+    size_t i = 0;
+    for (; prefix[i] != '\0'; i++) {
+        if (s[i] == '\0') return -1;
+        if (tolower((unsigned char)s[i]) != tolower((unsigned char)prefix[i])) {
+            return tolower((unsigned char)s[i]) - tolower((unsigned char)prefix[i]);
+        }
+    }
+    return 0;
 }
